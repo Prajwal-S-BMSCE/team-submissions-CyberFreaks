@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File and Text Encryption Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0a0e27;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-animated {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(14, 165, 233, 0.1) 0%, transparent 50%);
+            z-index: 0;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Glass morphism */
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-light {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+        }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Neon glow effect */
+        .neon-border {
+            position: relative;
+            border: 2px solid transparent;
+            background: linear-gradient(#0f172a, #0f172a) padding-box,
+                        linear-gradient(135deg, #667eea, #764ba2) border-box;
+        }
+
+        .neon-glow {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.4),
+                        0 0 40px rgba(118, 75, 162, 0.2);
+        }
+
+        /* Code output styling */
+        .code-output {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            max-height: 150px;
+            overflow-y: auto;
+            word-break: break-all;
+            white-space: pre-wrap;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(99, 102, 241, 0.5) rgba(30, 41, 59, 0.3);
+        }
+
+        .code-output::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .code-output::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 3px;
+        }
+
+        .code-output::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 3px;
+        }
+
+        /* Button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Badge styles */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Status indicators */
+        .status-success {
+            color: #10b981;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .status-fail {
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+
+        /* Floating particles */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-100vh) translateX(30px); opacity: 0; }
+        }
+
+        .particle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: rgba(139, 92, 246, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float linear infinite;
+        }
+
+        /* Pulse animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Card hover effect */
+        .card-interactive {
+            transition: all 0.3s ease;
+        }
+
+        .card-interactive:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Process flow arrows */
+        .flow-arrow {
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 12px solid rgba(99, 102, 241, 0.6);
+            margin: 0.5rem auto;
+        }
+
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .code-output {
+                font-size: 0.7rem;
+                max-height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animated"></div>
+    
+    <!-- Floating particles -->
+    <div id="particles-container"></div>
+
+    <div class="content-wrapper min-h-screen p-4 md:p-8">
+        <div class="max-w-7xl mx-auto">
+            
+            <!-- Header Section -->
+            <header class="text-center mb-12 space-y-6">
+                <div class="inline-block glass badge neon-glow pulse-slow">
+                    <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <span class="text-purple-300">NIST-Approved Quantum Security</span>
+                </div>
+                
+                <h1 class="text-5xl md:text-7xl font-bold gradient-text mb-4">
+                    Secure File and Text Encryption Tool
+                </h1>
+                
+                <p class="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
+                    Experience cutting-edge quantum-resistant encryption with 
+                    <span class="text-purple-400 font-semibold">CRYSTALS-Kyber-512</span> and 
+                    <span class="text-blue-400 font-semibold">ChaCha20</span>
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4 mt-8">
+                    <div class="glass-light badge">
+                        <svg class="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-gray-300">Built from Scratch</span>
+                    </div>
+                    <div class="glass-light badge">
+                        <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path>
+                        </svg>
+                        <span class="text-gray-300">Educational Purpose</span>
+                    </div>
+                    <div class="glass-light badge">
+                        <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-gray-300">RFC 7539 Compliant</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Input Section -->
+            <section class="glass neon-border rounded-2xl p-8 mb-8 neon-glow">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Your Secret Message</h2>
+                        <p class="text-sm text-gray-400">Enter text to encrypt with quantum-resistant algorithms</p>
+                    </div>
+                </div>
+
+                <textarea 
+                    id="plaintext" 
+                    rows="4" 
+                    class="w-full p-4 bg-slate-900/50 border border-purple-500/30 rounded-xl text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
+                    placeholder="Type your confidential message here...">This is a secret message that will be protected by quantum-resistant cryptography!</textarea>
+                
+                <div class="flex justify-center mt-6">
+                    <button id="run-button" class="btn-primary px-12 py-4 text-white font-bold rounded-xl shadow-2xl focus:outline-none flex items-center gap-3 text-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <span>Execute Cryptographic Protocol</span>
+                    </button>
+                </div>
+            </section>
+            
+            <!-- Loading State -->
+            <div id="loading" class="hidden fade-in">
+                <div class="glass rounded-2xl p-12 text-center">
+                    <div class="spinner mx-auto mb-6"></div>
+                    <p class="text-yellow-300 text-xl font-semibold mb-2">Processing Quantum-Resistant Cryptography</p>
+                    <p class="text-gray-400 text-sm">Running Kyber-512 KEM and ChaCha20 encryption from scratch...</p>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results" class="hidden space-y-8 fade-in">
+                
+                <!-- Success Banner -->
+                <div class="glass neon-border rounded-2xl p-6 text-center neon-glow">
+                    <div class="flex items-center justify-center gap-4 flex-wrap">
+                        <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div class="text-left">
+                            <h3 class="text-2xl font-bold text-green-300">Cryptographic Operations Successful</h3>
+                            <p class="text-gray-400 text-sm">All security protocols executed without errors</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kyber KEM Section -->
+                <section class="glass rounded-2xl p-8 card-interactive">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+                            🔐
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-purple-300">CRYSTALS-Kyber-512</h3>
+                            <p class="text-gray-400">Post-Quantum Key Encapsulation Mechanism (Module-LWE)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- Public Key -->
+                        <div class="glass-light rounded-xl p-5 card-interactive">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                                </svg>
+                                <span class="text-purple-300 font-semibold">Public Key</span>
+                                <span class="text-xs text-gray-500 ml-auto">(ρ seed)</span>
+                            </div>
+                            <div id="kyber-pk" class="code-output p-3 rounded-lg text-purple-200"></div>
+                        </div>
+
+                        <!-- Encapsulated Secret -->
+                        <div class="glass-light rounded-xl p-5 card-interactive">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <span class="text-pink-300 font-semibold">Encapsulated Secret</span>
+                                <span class="text-xs text-gray-500 ml-auto">(ss_A)</span>
+                            </div>
+                            <div id="enc-secret" class="code-output p-3 rounded-lg text-pink-200"></div>
+                        </div>
+
+                        <!-- Private Key -->
+                        <div class="glass-light rounded-xl p-5 card-interactive">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                </svg>
+                                <span class="text-indigo-300 font-semibold">Private Key</span>
+                                <span class="text-xs text-gray-500 ml-auto">(Secret)</span>
+                            </div>
+                            <div id="kyber-sk" class="code-output p-3 rounded-lg text-indigo-200"></div>
+                        </div>
+
+                        <!-- Decapsulated Secret -->
+                        <div class="glass-light rounded-xl p-5 card-interactive">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="text-green-300 font-semibold">Decapsulated Secret</span>
+                                <span class="text-xs text-gray-500 ml-auto">(ss_B)</span>
+                            </div>
+                            <div id="dec-secret" class="code-output p-3 rounded-lg text-green-200"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Verification Result -->
+                    <div class="neon-border rounded-xl p-6 bg-gradient-to-r from-purple-900/20 to-pink-900/20">
+                        <div class="flex items-center justify-center gap-4 flex-wrap">
+                            <span class="text-lg font-semibold text-gray-200">Shared Secret Verification:</span>
+                            <div class="flex items-center gap-2">
+                                <svg id="match-icon" class="w-8 h-8 status-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span id="secrets-match" class="text-3xl font-bold"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Data Flow Visualization -->
+                <div class="text-center py-4">
+                    <div class="flow-arrow"></div>
+                    <div class="glass-light badge px-6 py-2 inline-flex">
+                        <span class="text-purple-300 font-semibold text-sm">Shared Secret Used for Symmetric Encryption</span>
+                    </div>
+                    <div class="flow-arrow"></div>
+                </div>
+
+                <!-- ChaCha20 Section -->
+                <section class="glass rounded-2xl p-8 card-interactive">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+                            🛡️
+                        </div>
+                        <div>
+                            <h3 class="text-3xl font-bold text-blue-300">ChaCha20 Stream Cipher</h3>
+                            <p class="text-gray-400">High-Speed Authenticated Encryption (RFC 7539)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Original Plaintext -->
+                        <div class="glass-light rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <span class="text-blue-300 font-semibold">Original Plaintext</span>
+                            </div>
+                            <div id="original-text" class="code-output p-3 rounded-lg text-blue-200"></div>
+                        </div>
+                        
+                        <!-- Transform Arrow -->
+                        <div class="flex items-center justify-center">
+                            <div class="glass-light badge px-8 py-3">
+                                <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                </svg>
+                                <span class="text-cyan-300 font-semibold">ChaCha20 Encryption Transform</span>
+                                <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Ciphertext -->
+                        <div class="glass-light rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <span class="text-purple-300 font-semibold">Encrypted Ciphertext</span>
+                                <span class="text-xs text-gray-500 ml-auto">(Hexadecimal)</span>
+                            </div>
+                            <div id="chacha-cipher" class="code-output p-3 rounded-lg text-purple-200"></div>
+                        </div>
+                        
+                        <!-- Transform Arrow -->
+                        <div class="flex items-center justify-center">
+                            <div class="glass-light badge px-8 py-3">
+                                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                </svg>
+                                <span class="text-green-300 font-semibold">ChaCha20 Decryption Transform</span>
+                                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Decrypted Plaintext -->
+                        <div class="glass-light rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-green-300 font-semibold">Decrypted Plaintext</span>
+                            </div>
+                            <div id="decrypted-text" class="code-output p-3 rounded-lg text-green-200"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Footer Info -->
+                <div class="glass rounded-xl p-6 text-center">
+                    <div class="flex items-center justify-center gap-3 mb-3">
+                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h4 class="text-lg font-semibold text-purple-300">Technology Stack</h4>
+                    </div>
+                    <p class="text-gray-400 leading-relaxed">
+                        This demonstration uses <span class="text-purple-400 font-semibold">CRYSTALS-Kyber-512</span> for quantum-resistant key exchange (based on Module Learning With Errors) 
+                        and <span class="text-blue-400 font-semibold">ChaCha20</span> stream cipher for high-speed authenticated encryption. 
+                        Both algorithms are implemented from scratch using <span class="text-cyan-400 font-semibold">Python</span> with custom SHAKE128/256 (Keccak) implementations.
+                    </p>
+                </div>
+                <!-- Performance Metrics Section -->
+                <section class="glass rounded-2xl p-8 card-interactive">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-14 h-14 bg-gradient-to-br from-green-600 to-teal-600 rounded-xl flex items-center justify-center text-2xl shadow-lg"></div>
+                            <div><h3 class="text-3xl font-bold text-green-300">Performance Metrics</h3>
+                                <p class="text-gray-400">Cryptographic Operation Timings</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Key Generation Time -->
+                    <div class="glass-light rounded-xl p-5 text-center">
+                        <div class="text-purple-400 text-sm font-semibold mb-2">Key Generation</div>
+                        <div id="time-keygen" class="text-3xl font-bold text-white">-</div>
+                        <div class="text-gray-500 text-xs mt-1">milliseconds</div>
+                    </div>
+                    
+                    <!-- Encapsulation Time -->
+                    <div class="glass-light rounded-xl p-5 text-center">
+                        <div class="text-pink-400 text-sm font-semibold mb-2">Encapsulation</div>
+                        <div id="time-encaps" class="text-3xl font-bold text-white">-</div>
+                        <div class="text-gray-500 text-xs mt-1">milliseconds</div>
+                    </div>
+                    
+                    <!-- Decapsulation Time -->
+                    <div class="glass-light rounded-xl p-5 text-center">
+                        <div class="text-indigo-400 text-sm font-semibold mb-2">Decapsulation</div>
+                        <div id="time-decaps" class="text-3xl font-bold text-white">-</div>
+                        <div class="text-gray-500 text-xs mt-1">milliseconds</div>
+                    </div>
+                    
+                    <!-- Encryption Time -->
+                    <div class="glass-light rounded-xl p-5 text-center">
+                        <div class="text-blue-400 text-sm font-semibold mb-2">Encryption</div>
+                        <div id="time-encrypt" class="text-3xl font-bold text-white">-</div>
+                        <div class="text-gray-500 text-xs mt-1">milliseconds</div>
+                    </div>
+                    
+                    <!-- Decryption Time -->
+                    <div class="glass-light rounded-xl p-5 text-center">
+                        <div class="text-cyan-400 text-sm font-semibold mb-2">Decryption</div>
+                        <div id="time-decrypt" class="text-3xl font-bold text-white">-</div>
+                        <div class="text-gray-500 text-xs mt-1">milliseconds</div>
+                    </div>
+                    
+                    <!-- Total Time -->
+                    <div class="glass-light rounded-xl p-5 text-center neon-border">
+                        <div class="text-green-400 text-sm font-semibold mb-2">Total Time</div>
+                        <div id="time-total" class="text-3xl font-bold text-green-300">-</div>
+                        <div class="text-gray-500 text-xs mt-1">milliseconds</div>
+                    </div>
+                </div>
+                
+                <!-- Data Size Metrics -->
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="glass-light rounded-xl p-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-400">Original Message Size:</span>
+                            <span id="size-original" class="text-white font-bold">- bytes</span>
+                        </div>
+                    </div>
+                    <div class="glass-light rounded-xl p-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-400">Encrypted Size:</span>
+                            <span id="size-encrypted" class="text-white font-bold">- bytes</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- File Encryption Section -->
+            <section class="glass rounded-2xl p-8 card-interactive">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-14 h-14 bg-gradient-to-br from-orange-600 to-red-600 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+                        📁
+                    </div>
+                    <div>
+                        <h3 class="text-3xl font-bold text-orange-300">File Encryption</h3>
+                        <p class="text-gray-400">Encrypt & Decrypt Files with Post-Quantum Security</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- File Upload -->
+                    <div class="glass-light rounded-xl p-6">
+                        <h4 class="text-lg font-semibold text-orange-300 mb-4">Encrypt File</h4>
+                        <div class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-2">Choose a file to encrypt:</label>
+                            <input type="file" id="file-input" class="w-full p-3 bg-slate-900/50 border border-orange-500/30 rounded-lg text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-orange-600 file:text-white hover:file:bg-orange-700 cursor-pointer" />
+                            <p class="text-xs text-gray-500 mt-2">Max size: 10MB | Allowed: txt, pdf, images, docs, zip</p>
+                        </div>
+                        <button id="encrypt-file-btn" class="w-full btn-primary px-6 py-3 rounded-lg font-semibold">
+                            🔐 Encrypt File
+                        </button>
+                        <div id="file-encrypt-result" class="mt-4 hidden">
+                            <div class="bg-green-900/30 border border-green-500/30 rounded-lg p-4">
+                                <p class="text-green-300 font-semibold mb-2">✅ File Encrypted Successfully!</p>
+                                <div class="text-sm text-gray-400 space-y-1">
+                                    <p>Filename: <span id="enc-filename" class="text-white"></span></p>
+                                    <p>Size: <span id="enc-size" class="text-white"></span> bytes</p>
+                                </div>
+                                <button id="download-encrypted-btn" class="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">
+                                    💾 Download Encrypted Package
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- File Decryption -->
+                    <div class="glass-light rounded-xl p-6">
+                        <h4 class="text-lg font-semibold text-orange-300 mb-4">Decrypt File</h4>
+                        <div class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-2">Upload encrypted package (JSON):</label>
+                            <input type="file" id="decrypt-file-input" accept=".json" class="w-full p-3 bg-slate-900/50 border border-orange-500/30 rounded-lg text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-orange-600 file:text-white hover:file:bg-orange-700 cursor-pointer" />
+                        </div>
+                        <button id="decrypt-file-btn" class="w-full btn-primary px-6 py-3 rounded-lg font-semibold">
+                            🔓 Decrypt File
+                        </button>
+                        <div id="file-decrypt-result" class="mt-4 hidden">
+                            <div class="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
+                                <p class="text-blue-300 font-semibold mb-2">✅ File Decrypted Successfully!</p>
+                                <div class="text-sm text-gray-400 space-y-1">
+                                    <p>Filename: <span id="dec-filename" class="text-white"></span></p>
+                                    <p>Size: <span id="dec-size" class="text-white"></span> bytes</p>
+                                </div>
+                                <button id="download-decrypted-btn" class="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                                    💾 Download Decrypted File
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create floating particles
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            for (let i = 0; i < 25; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (12 + Math.random() * 8) + 's';
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // Main encryption execution
+        document.getElementById('run-button').addEventListener('click', async () => {
+            const plaintext = document.getElementById('plaintext').value;
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            const runButton = document.getElementById('run-button');
+            
+            if (!plaintext.trim()) {
+                alert('⚠️ Please enter a message to encrypt!');
+                return;
+            }
+
+            resultsDiv.classList.add('hidden');
+            loadingDiv.classList.remove('hidden');
+            runButton.disabled = true;
+            runButton.querySelector('span').textContent = 'Processing...';
+
+            try {
+                const response = await fetch('/run_crypto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plaintext: plaintext }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.status === 'Error') {
+                    throw new Error(data.message || 'Unknown error occurred');
+                }
+                
+                // Populate results
+                document.getElementById('kyber-pk').textContent = data.kyber_pk || 'N/A';
+                document.getElementById('kyber-sk').textContent = data.kyber_sk || 'N/A';
+                document.getElementById('enc-secret').textContent = data.encapsulated_secret || 'N/A';
+                document.getElementById('dec-secret').textContent = data.decapsulated_secret || 'N/A';
+                
+                const matchSpan = document.getElementById('secrets-match');
+                const matchIcon = document.getElementById('match-icon');
+                
+                if (data.secrets_match) {
+                    matchSpan.textContent = '✓ VERIFIED';
+                    matchSpan.className = 'text-3xl font-bold status-success';
+                    matchIcon.className = 'w-8 h-8 status-success';
+                } else {
+                    matchSpan.textContent = '✗ MISMATCH';
+                    matchSpan.className = 'text-3xl font-bold status-fail';
+                    matchIcon.className = 'w-8 h-8 status-fail';
+                }
+                
+                document.getElementById('original-text').textContent = data.original_plaintext || 'N/A';
+                document.getElementById('chacha-cipher').textContent = data.chacha_ciphertext || 'N/A';
+                document.getElementById('decrypted-text').textContent = data.decrypted_plaintext || 'N/A';
+
+                // Update performance metrics
+                if (data.performance) {
+                    document.getElementById('time-keygen').textContent = data.performance.keygen_ms || '-';
+                    document.getElementById('time-encaps').textContent = data.performance.encaps_ms || '-';
+                    document.getElementById('time-decaps').textContent = data.performance.decaps_ms || '-';
+                    document.getElementById('time-encrypt').textContent = data.performance.encrypt_ms || '-';
+                    document.getElementById('time-decrypt').textContent = data.performance.decrypt_ms || '-';
+                    document.getElementById('time-total').textContent = data.performance.total_ms || '-';
+                }
+                
+                // Update size metrics
+                if (data.message_size_bytes !== undefined) {
+                    document.getElementById('size-original').textContent = data.message_size_bytes + ' bytes';
+                }
+                if (data.ciphertext_size_bytes !== undefined) {
+                    document.getElementById('size-encrypted').textContent = data.ciphertext_size_bytes + ' bytes';
+                }
+
+                loadingDiv.classList.add('hidden');
+                resultsDiv.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+            } catch (error) {
+                console.error('Error:', error);
+                loadingDiv.classList.add('hidden');
+                alert(`❌ Error: ${error.message}`);
+            } finally {
+                runButton.disabled = false;
+                runButton.querySelector('span').textContent = 'Execute Cryptographic Protocol';
+            }
+        });
+
+        // File Encryption
+        let encryptedFileData = null;
+        
+        document.getElementById('encrypt-file-btn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('file-input');
+            const resultDiv = document.getElementById('file-encrypt-result');
+            const btn = document.getElementById('encrypt-file-btn');
+            
+            if (!fileInput.files[0]) {
+                alert('⚠️ Please select a file to encrypt!');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            btn.disabled = true;
+            btn.textContent = '🔄 Encrypting...';
+            resultDiv.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/encrypt_file', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'Error') {
+                    throw new Error(data.message);
+                }
+                
+                encryptedFileData = data;
+                document.getElementById('enc-filename').textContent = data.filename;
+                document.getElementById('enc-size').textContent = data.encrypted_size;
+                resultDiv.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`❌ Encryption failed: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔐 Encrypt File';
+            }
+        });
+        
+        document.getElementById('download-encrypted-btn').addEventListener('click', () => {
+            if (!encryptedFileData) return;
+            
+            const jsonData = JSON.stringify(encryptedFileData, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `encrypted_${encryptedFileData.filename}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        // File Decryption
+        let decryptedFileData = null;
+        
+        document.getElementById('decrypt-file-btn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('decrypt-file-input');
+            const resultDiv = document.getElementById('file-decrypt-result');
+            const btn = document.getElementById('decrypt-file-btn');
+            
+            if (!fileInput.files[0]) {
+                alert('⚠️ Please select an encrypted package to decrypt!');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = '🔄 Decrypting...';
+            resultDiv.classList.add('hidden');
+            
+            try {
+                const file = fileInput.files[0];
+                const text = await file.text();
+                const encryptedPackage = JSON.parse(text);
+                
+                const response = await fetch('/decrypt_file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(encryptedPackage)
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'Error') {
+                    throw new Error(data.message);
+                }
+                
+                decryptedFileData = data;
+                document.getElementById('dec-filename').textContent = data.filename;
+                document.getElementById('dec-size').textContent = data.decrypted_size;
+                resultDiv.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`❌ Decryption failed: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔓 Decrypt File';
+            }
+        });
+        
+        document.getElementById('download-decrypted-btn').addEventListener('click', () => {
+            if (!decryptedFileData) return;
+            
+            const binaryString = atob(decryptedFileData.data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            const blob = new Blob([bytes]);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = decryptedFileData.filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
+                
